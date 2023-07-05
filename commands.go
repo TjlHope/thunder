@@ -1,6 +1,7 @@
 /*
  * Thunder, BoltDB's interactive shell
  *     Copyright (c) 2017, Christian Muehlhaeuser <muesli@gmail.com>
+ *     Copyright (c) 2023, Tom Hope <tjlhope@gmail.com>
  *
  *   For license see LICENSE
  */
@@ -66,12 +67,14 @@ func lsCmd(c *ishell.Context) {
 		c.Println(entry)
 	}
 
-	footnote := ""
-	omitted := len(contents) - len(entries)
-	if omitted > 0 {
-		footnote = fmt.Sprintf(" (%d omitted in this list)", omitted)
+	if c.Get("mode") == Interactive {
+		footnote := ""
+		omitted := len(contents) - len(entries)
+		if omitted > 0 {
+			footnote = fmt.Sprintf(" (%d omitted in this list)", omitted)
+		}
+		c.Printf("%d keys in bucket%s\n", len(contents), footnote)
 	}
-	c.Printf("%d keys in bucket%s\n", len(contents), footnote)
 }
 
 func getCmd(c *ishell.Context) {
@@ -128,8 +131,15 @@ func cdCmd(c *ishell.Context) {
 		}
 		cwd = b
 	}
+	setPrompt(c)
+}
 
-	shell.SetPrompt(fmt.Sprintf(promptFmt, fname, cwd.String()))
+func setPrompt(c *ishell.Context) {
+	if c.Get("mode") == Interactive {
+		shell.SetPrompt(fmt.Sprintf(promptFmt, fname, cwd.String()))
+	} else {
+		shell.SetPrompt("")
+	}
 }
 
 func mkdirCmd(c *ishell.Context) {
@@ -160,4 +170,16 @@ func rmCmd(c *ishell.Context) {
 	}
 
 	c.Err(target.Rm(key))
+}
+
+func modeCmd(c *ishell.Context) {
+	if len(c.Args) == 1 {
+		arg := c.Args[0]
+		if IsMode(arg) {
+			c.Set("mode", arg)
+			setPrompt(c)
+			return
+		}
+	}
+	c.Err(errors.New(fmt.Sprintf("mode: single argument needed: %s", Modes())))
 }
