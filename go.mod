@@ -1,4 +1,4 @@
-module github.com/muesli/thunder
+module github.com/TjlHope/thunder
 
 go 1.12
 
