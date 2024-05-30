@@ -82,7 +82,7 @@ func createShell() *ishell.Shell {
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "ls",
 		Func:      lsCmd,
-		Help:      "ls <bucket>",
+		Help:      "ls [bucket]",
 		LongHelp:  "lists keys in a bucket",
 		Completer: bucketCompleter,
 	})
@@ -90,7 +90,7 @@ func createShell() *ishell.Shell {
 		Name:      "get",
 		Func:      getCmd,
 		Help:      "get <key> [--json <path>]",
-		LongHelp:  "gets the value of a key, optionally from a matching JSON path",
+		LongHelp:  "gets the value of a key, optionally from a matching JSON Pointer path",
 		Completer: keyCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
@@ -98,6 +98,13 @@ func createShell() *ishell.Shell {
 		Func:      putCmd,
 		Help:      "put <key> <<value>|--json <path> <value>|--json-patch <patch>>",
 		LongHelp:  "sets the value of a key, optionally patching a JSON value",
+		Completer: keyCompleter,
+	})
+	shell.AddCmd(&ishell.Cmd{
+		Name:      "set",
+		Func:      putCmd,
+		Help:      "alias for put",
+		LongHelp:  "see put help",
 		Completer: keyCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
