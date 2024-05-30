@@ -14,6 +14,8 @@ import (
 	"strings"
 
 	"github.com/muesli/ishell"
+	jsonpointer "github.com/dustin/go-jsonpointer"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 )
 
 func travel(cwd Bucket, path string) (Bucket, error) {
@@ -78,8 +80,18 @@ func lsCmd(c *ishell.Context) {
 }
 
 func getCmd(c *ishell.Context) {
-	if len(c.Args) < 1 {
+	switch len(c.Args) {
+	case 0:
 		c.Err(errors.New("get: missing key name"))
+		return
+	case 1: // <key>
+		break
+	case 3:	// <key> --json <path:json-pointer>
+		if c.Args[1] == "--json" {
+			break
+		} // fall-through
+	default:
+		c.Err(errors.New("get: too many arguments"))
 		return
 	}
 
@@ -95,7 +107,26 @@ func getCmd(c *ishell.Context) {
 		c.Err(err)
 		return
 	}
+
+	if len(c.Args) == 3 && c.Args[1] == "--json" {
+		data, err = jsonpointer.Find(data, c.Args[2])
+		if err != nil {
+			c.Err(err)
+			return
+		}
+	}
+
 	c.Println(string(data))
+}
+
+func patchJsonValue(bucket Bucket, key string, patch []byte) (error) {
+	doc, err := bucket.Get(key)
+	if err != nil { return err }
+	patcher, err := jsonpatch.DecodePatch(patch)
+	if err != nil { return err }
+	modified, err := patcher.Apply(doc)
+	if err != nil { return err }
+	return bucket.Put(key, string(modified))
 }
 
 func putCmd(c *ishell.Context) {
@@ -106,6 +137,23 @@ func putCmd(c *ishell.Context) {
 	case 1:
 		c.Err(errors.New("put: missing value"))
 		return
+	case 2: // <key> <value>
+		break
+	case 3: // <key> --json-patch <patch>
+		if c.Args[1] != "--json-patch" {
+			c.Err(errors.New("put: expected: <key> --json-patch <patch>"))
+			return
+		}
+		break
+	case 4: // <key> --json <path:json-pointer> <value>
+		if c.Args[1] != "--json" {
+			c.Err(errors.New("put: expected: <key> --json-set <path> <value>"))
+			return
+		}
+		break
+	default:
+		c.Err(errors.New("put: too many arguments"))
+		return
 	}
 
 	target, key, err := parseKeyPath(cwd, c.Args[0])
@@ -114,7 +162,22 @@ func putCmd(c *ishell.Context) {
 		return
 	}
 
-	c.Err(target.Put(key, c.Args[1]))
+	switch c.Args[1] {
+	case "--json":
+		patchJSON := []byte(fmt.Sprintf(
+			`[{"op": "add", "path": "%s", "value": %s}]`,
+			c.Args[2], c.Args[3]))
+		err = patchJsonValue(target, key, patchJSON)
+		break
+	case "--json-patch":
+		err = patchJsonValue(target, key, []byte(c.Args[2]))
+		break
+	default:
+		err = target.Put(key, c.Args[1])
+		break
+	}
+
+	c.Err(err)
 }
 
 func cdCmd(c *ishell.Context) {

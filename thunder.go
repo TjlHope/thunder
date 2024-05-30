@@ -82,49 +82,49 @@ func createShell() *ishell.Shell {
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "ls",
 		Func:      lsCmd,
-		Help:      "list keys",
+		Help:      "ls <bucket>",
 		LongHelp:  "lists keys in a bucket",
 		Completer: bucketCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "get",
 		Func:      getCmd,
-		Help:      "show value",
-		LongHelp:  "shows the value of a key",
+		Help:      "get <key> [--json <path>]",
+		LongHelp:  "gets the value of a key, optionally from a matching JSON path",
 		Completer: keyCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "put",
 		Func:      putCmd,
-		Help:      "put value",
-		LongHelp:  "sets the value of a key",
+		Help:      "put <key> <<value>|--json <path> <value>|--json-patch <patch>>",
+		LongHelp:  "sets the value of a key, optionally patching a JSON value",
 		Completer: keyCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "cd",
 		Func:      cdCmd,
-		Help:      "jump to a bucket",
+		Help:      "cd [bucket]",
 		LongHelp:  "jumps to a bucket (empty to jump back to the root bucket)",
 		Completer: bucketCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "mkdir",
 		Func:      mkdirCmd,
-		Help:      "create a bucket",
+		Help:      "mkdir <bucket>",
 		LongHelp:  "creates a bucket",
 		Completer: keyCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "rm",
 		Func:      rmCmd,
-		Help:      "delete a key",
+		Help:      "rm <key>",
 		LongHelp:  "deletes a key",
 		Completer: keyCompleter,
 	})
 	shell.AddCmd(&ishell.Cmd{
 		Name:      "mode",
 		Func:      modeCmd,
-		Help:      "sets the shell mode",
+		Help:      "mode <interactive|batch>",
 		LongHelp:  "sets the shell mode (interactive or batch)",
 		Completer: modeCompleter,
 	})
